@@ -204,6 +204,19 @@ class MistralRunner(AsyncActionRunner):
                         'st2_context': st2_execution_context
                     }
                 }
+            },
+            'notify': {
+                'type': 'st2',
+                'events': [
+                    'WORKFLOW_SUCCEEDED',
+                    'WORKFLOW_FAILED',
+                    'WORKFLOW_CANCELLED',
+                    'WORKFLOW_PAUSED',
+                    'TASK_SUCCEEDED',
+                    'TASK_FAILED',
+                    'TASK_CANCELLED',
+                    'TASK_PAUSED'
+                ],
             }
         }
 
@@ -403,8 +416,14 @@ class MistralRunner(AsyncActionRunner):
                     self.context.get('user', None)
                 )
 
+        status = (
+            action_constants.LIVEACTION_STATUS_PAUSING
+            if action_service.is_children_active(self.liveaction.id)
+            else action_constants.LIVEACTION_STATUS_PAUSED
+        )
+
         return (
-            action_constants.LIVEACTION_STATUS_PAUSING,
+            status,
             self.liveaction.result,
             self.liveaction.context
         )
@@ -477,8 +496,14 @@ class MistralRunner(AsyncActionRunner):
                     self.context.get('user', None)
                 )
 
+        status = (
+            action_constants.LIVEACTION_STATUS_CANCELING
+            if action_service.is_children_active(self.liveaction.id)
+            else action_constants.LIVEACTION_STATUS_CANCELED
+        )
+
         return (
-            action_constants.LIVEACTION_STATUS_CANCELING,
+            status,
             self.liveaction.result,
             self.liveaction.context
         )
